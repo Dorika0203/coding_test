@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "vector": "cpp",
-        "tuple": "cpp",
-        "algorithm": "cpp",
-        "ostream": "cpp",
-        "type_traits": "cpp"
-    }
-}
