@@ -32,7 +32,7 @@ int main()
         {coord(1,0), coord(1,1), coord(2,1)},
         {coord(1,0), coord(1,-1), coord(2,-1)},
         {coord(0,1), coord(1,1), coord(1,2)},
-        {coord(0,-1), coord(-1,-1), coord(-1,-2)},
+        {coord(0,-1), coord(1,-1), coord(1,-2)},
 
         {coord(0,-1), coord(0,1), coord(1,0)},
         {coord(0,-1), coord(0,1), coord(-1,0)},
