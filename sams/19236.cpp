@@ -79,19 +79,11 @@ int main()
         auto tfishes = sim.fishes;
         auto teat = sim.eat;
         task_stack.pop();
-        // cout << teat << endl;
+        cout << teat << endl;
 
         // move fish
         for (int i = 1; i < 17; i++)
         {
-            cout << " ------------------- "  << i << endl;
-            for(int m=0; m<4; m++) {
-                for(int n=0; n<4; n++) {
-                    cout << tview[m][n].num << " ";
-                }
-                cout << endl;
-            }
-
             coord cur_fish_coord = tfishes[i];
             coord new_coord;
             // removed fish.
@@ -100,58 +92,37 @@ int main()
             fish cur_fish = tview[cur_fish_coord.x][cur_fish_coord.y];
             int cur_fish_num = cur_fish.num;
             int cur_fish_dir = cur_fish.dir;
-            bool flag = false;
 
-            new_coord.x = cur_fish_coord.x + dx[cur_fish_dir];
-            new_coord.y = cur_fish_coord.y + dy[cur_fish_dir];
-
-            if (new_coord.x >= 0 && new_coord.x < 4 && new_coord.y >= 0 && new_coord.y < 4 && tview[new_coord.x][new_coord.y].num != 0)
-            {
-                fish swapfish = tview[new_coord.x][new_coord.y];
-                // swapfish exist.
-                if (swapfish.num > 0)
+            for(int dirp=0; dirp <8; dirp++) {
+                cur_fish_dir = (cur_fish.dir + dirp) % 8;
+                new_coord.x = cur_fish_coord.x + dx[cur_fish_dir];
+                new_coord.y = cur_fish_coord.y + dy[cur_fish_dir];
+                if (new_coord.x >= 0 && new_coord.x < 4 && new_coord.y >= 0 && new_coord.y < 4 && tview[new_coord.x][new_coord.y].num != 0)
                 {
-                    tfishes[swapfish.num] = cur_fish_coord;
-                    tview[cur_fish_coord.x][cur_fish_coord.y] = swapfish;
+                    fish swapfish = tview[new_coord.x][new_coord.y];
+                    // swapfish exist.
+                    if (swapfish.num > 0)
+                    {
+                        tfishes[swapfish.num] = cur_fish_coord;
+                        tview[cur_fish_coord.x][cur_fish_coord.y] = swapfish;
+                    }
+                    else
+                    {
+                        // make leaved place empty.
+                        tview[cur_fish_coord.x][cur_fish_coord.y].num = -1;
+                    }
+                    tfishes[cur_fish_num] = new_coord;
+                    tview[new_coord.x][new_coord.y] = fish(cur_fish.num, cur_fish_dir);
+                    break;
                 }
-                else
-                {
-                    // make leaved place empty.
-                    tview[cur_fish_coord.x][cur_fish_coord.y].num = -1;
-                }
-                tfishes[cur_fish_num] = new_coord;
-                tview[new_coord.x][new_coord.y] = cur_fish;
-                flag = true;
             }
-
-            if(flag) continue;
-
-            // new direction trial
-            cur_fish.dir++;
-            cur_fish.dir = cur_fish.dir % 8;
-            cur_fish_dir = cur_fish.dir;
-
-            new_coord.x = cur_fish_coord.x + dx[cur_fish_dir];
-            new_coord.y = cur_fish_coord.y + dy[cur_fish_dir];
-
-            if (new_coord.x >= 0 && new_coord.x < 4 && new_coord.y >= 0 && new_coord.y < 4 && tview[new_coord.x][new_coord.y].num != 0)
-            {
-                fish swapfish = tview[new_coord.x][new_coord.y];
-                // swapfish exist.
-                if (swapfish.num > 0)
-                {
-                    tfishes[swapfish.num] = cur_fish_coord;
-                    tview[cur_fish_coord.x][cur_fish_coord.y] = swapfish;
-                }
-                else
-                {
-                    // make leaved place empty.
-                    tview[cur_fish_coord.x][cur_fish_coord.y].num = -1;
-                }
-                tfishes[cur_fish_num] = new_coord;
-                tview[new_coord.x][new_coord.y] = cur_fish;
-                flag = true;
-            }
+            // cout << " ------------------- "  << i << endl;
+            // for(int m=0; m<4; m++) {
+            //     for(int n=0; n<4; n++) {
+            //         cout << tview[m][n].num << " ";
+            //     }
+            //     cout << endl;
+            // }
         }
 
         // shark eat
@@ -166,7 +137,7 @@ int main()
             finish_flag = false;
 
             fish eaten_fish = tview[new_shark_coord.x][new_shark_coord.y];
-            cout << "EAT : " << eaten_fish.num << endl;
+            // cout << "EAT : " << eaten_fish.num << endl;
             simulation_map newsim;
 
             newsim.eat = teat + eaten_fish.num;
@@ -187,7 +158,6 @@ int main()
         if(finish_flag) {
             eat_max = eat_max > teat ? eat_max : teat;
         }
-        break;
     }
 
     cout << eat_max << endl;
