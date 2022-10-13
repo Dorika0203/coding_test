@@ -4,165 +4,191 @@
 
 using namespace std;
 
-int dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
-int dx[8] = {0, -1, -1, -1, 0, 1, 1, 1};
-typedef pair<int, int> coord;
+// typedef pair<int, int> fish;  // num, dir
+// typedef pair<int, int> coord; // x, y
 
-class fish
-{
-public:
+class fish {
+    public:
+    int num;
     int dir;
-    coord loc;
-
-    fish(int d, coord l) {
-        dir = d;
-        loc = l;
-    }
 
     fish() {
+        num = -1;
         dir = -1;
-        loc = coord(-1, -1);
     }
-};
-
-class shark
-{
-    public:
-    int dir;
-    coord loc;
-    int eaten;
-
-    shark(int d, coord l, int e) {
+    fish(int n, int d) {
+        num = n;
         dir = d;
-        loc = l;
-        eaten = e;
-    }
-
-    shark() {
-        dir = -1;
-        loc = coord(-1, -1);
-        eaten = 0;
     }
 };
+
+class coord {
+    public:
+    int x, y;
+    coord() {
+        x = y = -1;
+    }
+    coord(int _x, int _y) {
+        x = _x;
+        y = _y;
+    }
+};
+
+
+class simulation_map
+{
+public:
+    int eat;
+    fish view[4][4];
+    coord fishes[17];
+};
+
+int dx[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+int dy[8] = {0, -1, -1, -1, 0, 1, 1, 1};
 
 int main()
 {
-    stack<pair<shark, fish*>> sim_stack;
-    fish fishes[17];
-    shark s;
-    int max_eat = 0;
 
-    for(int i=0; i<16; i++) {
-        int num, dir;
-        cin >> num >> dir;
-        fishes[num] = fish(dir-1, coord(i/4, i%4));
-    }
+    simulation_map task;
+    int eat_max = 0;
 
-    // shark init
-    for(int i=1; i<17; i++) {
-        if(fishes[i].loc.first == 0 && fishes[i].loc.second == 0) {
-            s.dir = fishes[i].dir;
-            s.loc = fishes[i].loc;
-            fishes[i].dir = -1;
-            s.eaten += i;
-            break;
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            int num, dir;
+            cin >> num >> dir;
+            task.view[i][j] = fish(num, dir - 1);
+            task.fishes[num] = coord(i, j);
         }
     }
 
-    sim_stack.push(pair<shark, fish*>(s, fishes));
+    // init. shark number is 0.
+    task.eat += task.view[0][0].num;
+    task.fishes[task.view[0][0].num] = coord(-1, -1);
+    task.fishes[0] = coord(0, 0);
+    task.view[0][0].num = 0;
 
-    while(!sim_stack.empty()) {
+    stack<simulation_map> task_stack;
+    task_stack.push(task);
 
-        auto simmap = sim_stack.top();
-        sim_stack.pop();
-        shark s = simmap.first;
-        fish* fishes = simmap.second;
-
-        cout << "--------" << endl;
-        cout << s.eaten << endl;
+    while (!task_stack.empty())
+    {
+        simulation_map sim = task_stack.top();
+        auto tview = sim.view;
+        auto tfishes = sim.fishes;
+        auto teat = sim.eat;
+        task_stack.pop();
+        // cout << teat << endl;
 
         // move fish
-        for(int i=1; i<17; i++) {
-
-            coord loc = fishes[i].loc;
-            int dir = fishes[i].dir;
-            if(dir == -1) continue;
-
-            int newy = loc.first + dy[dir];
-            int newx = loc.second + dx[dir];
-
-            if(newy >= 0 && newy < 4  && newx >= 0 && newx < 4 && !(s.loc.first == newy && s.loc.second == newx)) {
-                // swap or move fish.
-                for(int j=1; j<17; j++) {
-                    if(i == j) continue;
-                    if(fishes[j].loc.first == newy && fishes[j].loc.second == newx) {
-                        fishes[j].loc = loc;
-                        break;
-                    }
+        for (int i = 1; i < 17; i++)
+        {
+            cout << " ------------------- "  << i << endl;
+            for(int m=0; m<4; m++) {
+                for(int n=0; n<4; n++) {
+                    cout << tview[m][n].num << " ";
                 }
-                fishes[i].loc.first = newy;
-                fishes[i].loc.second = newx;
+                cout << endl;
             }
 
-            // dir change and try again.
-            else {
-                dir = (dir+1)%8;
-                newy = loc.first + dy[dir];
-                newx = loc.second + dx[dir];
-                if(newy >= 0 && newy < 4  && newx >= 0 && newx < 4 && !(s.loc.first == newy && s.loc.second == newx)) {
-                    // swap or move fish.
-                    for(int j=1; j <17; j++) {
-                        if(i == j) continue;
-                        if(fishes[j].loc.first == newy && fishes[j].loc.second == newx) {
-                            fishes[j].loc = loc;
-                            break;
-                        }
-                    }
-                    fishes[i].loc.first = newy;
-                    fishes[i].loc.second = newx;
-                    fishes[i].dir = dir;
-                }
-            }
-        }
+            coord cur_fish_coord = tfishes[i];
+            coord new_coord;
+            // removed fish.
+            if (cur_fish_coord.x == -1)
+                continue;
+            fish cur_fish = tview[cur_fish_coord.x][cur_fish_coord.y];
+            int cur_fish_num = cur_fish.num;
+            int cur_fish_dir = cur_fish.dir;
+            bool flag = false;
 
-        for(int j=1; j<17; j++) {
-            if(fishes[j].dir != -1) {
-                cout << j << ": (" << fishes[j].loc.first << ", " << fishes[j].loc.second << ")" << endl;
+            new_coord.x = cur_fish_coord.x + dx[cur_fish_dir];
+            new_coord.y = cur_fish_coord.y + dy[cur_fish_dir];
+
+            if (new_coord.x >= 0 && new_coord.x < 4 && new_coord.y >= 0 && new_coord.y < 4 && tview[new_coord.x][new_coord.y].num != 0)
+            {
+                fish swapfish = tview[new_coord.x][new_coord.y];
+                // swapfish exist.
+                if (swapfish.num > 0)
+                {
+                    tfishes[swapfish.num] = cur_fish_coord;
+                    tview[cur_fish_coord.x][cur_fish_coord.y] = swapfish;
+                }
+                else
+                {
+                    // make leaved place empty.
+                    tview[cur_fish_coord.x][cur_fish_coord.y].num = -1;
+                }
+                tfishes[cur_fish_num] = new_coord;
+                tview[new_coord.x][new_coord.y] = cur_fish;
+                flag = true;
+            }
+
+            if(flag) continue;
+
+            // new direction trial
+            cur_fish.dir++;
+            cur_fish.dir = cur_fish.dir % 8;
+            cur_fish_dir = cur_fish.dir;
+
+            new_coord.x = cur_fish_coord.x + dx[cur_fish_dir];
+            new_coord.y = cur_fish_coord.y + dy[cur_fish_dir];
+
+            if (new_coord.x >= 0 && new_coord.x < 4 && new_coord.y >= 0 && new_coord.y < 4 && tview[new_coord.x][new_coord.y].num != 0)
+            {
+                fish swapfish = tview[new_coord.x][new_coord.y];
+                // swapfish exist.
+                if (swapfish.num > 0)
+                {
+                    tfishes[swapfish.num] = cur_fish_coord;
+                    tview[cur_fish_coord.x][cur_fish_coord.y] = swapfish;
+                }
+                else
+                {
+                    // make leaved place empty.
+                    tview[cur_fish_coord.x][cur_fish_coord.y].num = -1;
+                }
+                tfishes[cur_fish_num] = new_coord;
+                tview[new_coord.x][new_coord.y] = cur_fish;
+                flag = true;
             }
         }
 
         // shark eat
-        bool movable = false;
+        coord cur_shark_coord = tfishes[0];
+        fish cur_shark = tview[cur_shark_coord.x][cur_shark_coord.y];
+        bool finish_flag = true;
+
         for(int i=1; i<4; i++) {
-            coord loc = s.loc;
-            int dir = s.dir;
-            int newy = loc.first + dy[dir]*i;
-            int newx = loc.second + dx[dir]*i;
+            coord new_shark_coord = coord(cur_shark_coord.x + dx[cur_shark.dir]*i, cur_shark_coord.y + dy[cur_shark.dir]*i);
+            if(new_shark_coord.x < 0 || new_shark_coord.y < 0 || new_shark_coord.x >= 4 || new_shark_coord.y >= 4) continue;
+            if(tview[new_shark_coord.x][new_shark_coord.y].num == -1) continue;
+            finish_flag = false;
 
-            if(newx < 0 || newx >= 4 || newy < 0 || newy >= 4) continue;
-            for(int j=1; j<17; j++) {
-                if(fishes[j].dir == -1) continue;
-                if(fishes[j].loc.first == newy && fishes[j].loc.second == newx) {
-                    movable = true;
-                    shark newmap_shark;
-                    fish newmap_fishes[17];
-                    newmap_shark.dir = fishes[j].dir;
-                    newmap_shark.loc = coord(newy, newx);
-                    newmap_shark.eaten = s.eaten + j;
+            fish eaten_fish = tview[new_shark_coord.x][new_shark_coord.y];
+            cout << "EAT : " << eaten_fish.num << endl;
+            simulation_map newsim;
 
-                    for(int k=1; k<17; k++) {
-                        newmap_fishes[k] = fishes[k];
-                    }
-                    newmap_fishes[j].dir = -1;
-                    cout << "EAT " << j << endl;
-                    sim_stack.push(pair<shark, fish*>(newmap_shark, newmap_fishes));
+            newsim.eat = teat + eaten_fish.num;
+            for(int j=0; j<17; j++) {
+                newsim.fishes[j] = tfishes[j];
+            }
+            for(int j=0; j<4; j++) {
+                for(int k=0; k<4; k++) {
+                    newsim.view[j][k] = tview[j][k];
                 }
             }
+            newsim.fishes[0] = new_shark_coord;
+            newsim.view[cur_shark_coord.x][cur_shark_coord.y].num = -1;
+            newsim.view[new_shark_coord.x][cur_shark_coord.y] = fish(0, eaten_fish.dir);
+            task_stack.push(newsim);
         }
 
-        if(!movable) {
-            max_eat = max_eat > s.eaten ? max_eat : s.eaten;
+        if(finish_flag) {
+            eat_max = eat_max > teat ? eat_max : teat;
         }
+        break;
     }
-    cout << max_eat << endl;
+
+    cout << eat_max << endl;
 }
